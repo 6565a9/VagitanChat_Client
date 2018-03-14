@@ -1,6 +1,5 @@
 # VagitanChat Client
-## About
-        Client Of [VagitanChat](https://github.com/6565a9/VagitanChat)
+Client Of [VagitanChat](https://github.com/6565a9/VagitanChat)
 ## Installing
 ```
         $ mkdir ~/VagitanChatClient/
