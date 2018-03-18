@@ -46,27 +46,32 @@ void IOThread::reading_thread(){
             QStringList listMsg( msg.split(" ") );
             QString text;
             qDebug() << listMsg.size() << msg ;
-            if(msg.size() < 1 || msg == "Timeout") continue;
-            else if(listMsg.size() < 2 || listMsg[0] != ":PRIVMSG" ){
+            if(msg.size() < 1 || msg == "Timeout" || listMsg.size() < 2) continue;
+            else if(listMsg[0] != ":PRIVMSG" ){
                 if(listMsg[0]==":ERROR"){
                     editor->insertPlainText(msg+"\n");
                     continue;
                 }
-                bool isRoomSelected = listMsg[1] != list->currentItem()->text().mid(1);
-                bool isRoomSelected_withoutdog = listMsg[2] != list->currentItem()->text().mid(1);
+
+                bool isRoomSelected = listMsg[1] == chatting.mid(1);
+                bool isRoomSelected_withoutdog;
+                if(listMsg.size() > 3)
+                    isRoomSelected_withoutdog = listMsg[2] == chatting.mid(1);
+                else
+                    isRoomSelected_withoutdog=false;
                 if(listMsg[0]==":ROOM"){
-                    if( isRoomSelected )continue;
+                    if( !isRoomSelected )continue;
                     QStringList users_room = msg.split(" ");
                     if(users_room.size() > 2)
                         for(auto it = users_room.begin()+2;it!=users_room.end();it++)
                             room_users->addItem(*it);
                 }
                 else if(listMsg[0]==":ADDED"){
-                    if( isRoomSelected_withoutdog )continue;
+                    if( !isRoomSelected_withoutdog )continue;
                     room_users->addItem(listMsg[1]);
                 }
                 else if(listMsg[0]==":REMOVED"){
-                    if( isRoomSelected_withoutdog )continue;
+                    if( !isRoomSelected_withoutdog )continue;
                     QListWidgetItem * item = Util::findItemInList(room_users,listMsg[1]);
                     if(item != 0 )
                         room_users->removeItemWidget(item);

@@ -58,6 +58,7 @@ void MainWindow::TalkChange(QListWidgetItem * item){
     ui->send->setEnabled(true);
     ui->writted->setEnabled(true);
     chatting=item->text();
+    io->setChatting(item->text());
     qDebug() << "Chatting " << chatting;
     std::string chattings_str = chatting.toStdString();
     std::ostringstream msgs;
@@ -147,6 +148,7 @@ void MainWindow::JoinRoom(void){
     QString RoomName =
             QInputDialog::getText(this,tr("Join to Room"),tr("Room name:"),QLineEdit::Normal,"main",&ok);
     if(ok){
+            io->setChatting("@"+RoomName);
             chatting="@"+RoomName;
             MainProtocol.joinToRoom(chatting.mid(1));
             io->getRoomList(chatting.mid(1));

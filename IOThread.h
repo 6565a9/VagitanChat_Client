@@ -37,7 +37,9 @@ public:
     }
 
    void getRoomList( const QString );
-
+   void setChatting(QString chatting){
+        this->chatting=std::move(chatting);
+   }
 
 private:
     QVagitanChatProtocol & protocol;
@@ -47,6 +49,8 @@ private:
     bool m_work=false;
     QMutex mut;
     QListWidget * room_users;
+
+    QString chatting;
 private:
 signals:
 
