@@ -48,6 +48,10 @@ void IOThread::reading_thread(){
             qDebug() << listMsg.size() << msg ;
             if(msg.size() < 1 || msg == "Timeout") continue;
             else if(listMsg.size() < 2 || listMsg[0] != ":PRIVMSG" ){
+                if(listMsg[0]==":ERROR"){
+                    editor->insertPlainText(msg+"\n");
+                    continue;
+                }
                 bool isRoomSelected = listMsg[1] != list->currentItem()->text().mid(1);
                 bool isRoomSelected_withoutdog = listMsg[2] != list->currentItem()->text().mid(1);
                 if(listMsg[0]==":ROOM"){
@@ -67,7 +71,6 @@ void IOThread::reading_thread(){
                     if(item != 0 )
                         room_users->removeItemWidget(item);
                 }
-                editor->insertPlainText(msg+"\n");
                 continue;
             }
 
