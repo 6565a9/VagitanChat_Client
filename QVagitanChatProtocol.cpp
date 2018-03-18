@@ -15,6 +15,15 @@ bool QVagitanChatProtocol::connect(const QString addr, unsigned int port) noexce
     return true;
 }
 
+void QVagitanChatProtocol::joinToRoom(const QString room_name){
+    write(":JOIN "+room_name);
+}
+
+QStringList QVagitanChatProtocol::getList(const QString room_name){
+    write(":LIST "+room_name);
+    return read().split(" ");
+}
+
 QString QVagitanChatProtocol::read(unsigned int ms) noexcept{
     if(!ready) QString("Not ready read");
     //return QString( m_socket->readAll() );
@@ -54,24 +63,18 @@ void QVagitanChatProtocol::privmsg(const QString to, const QString msg, type_pri
             break;
     }
     write(tmp);
-    if(read(500) == ":ERROR NOT FOUND" )
+    if(read(1024) == ":ERROR NOT FOUND" )
         throw(std::runtime_error("Not found user"));
 }
 
 void QVagitanChatProtocol::reg(const QString username, const QString password){
     if( checkAnswer(":REGISTER "+username+" "+password, ":REGISTERED" ) )
-    {
-        logined=true;
-        this->username=username;
-    }
+        logining();
 }
 
 void QVagitanChatProtocol::login(const QString username, const QString password){
     if( checkAnswer(":USER "+username+" "+password, ":WELCOME "+username ) )
-    {
-        logined=true;
-        this->username=username;
-    }
+     logining();
 }
 
 void QVagitanChatProtocol::dissconnect() noexcept{

@@ -28,16 +28,6 @@
     </property>
     <layout class="QHBoxLayout" name="MailLayout">
      <item>
-      <widget class="QScrollBar" name="scrollTalks">
-       <property name="styleSheet">
-        <string notr="true">background-color: rgb(149, 165, 129);</string>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QListWidget" name="Talks">
        <property name="styleSheet">
         <string notr="true">background-color: rgb(255, 251, 247);</string>
@@ -60,6 +50,25 @@
         <widget class="QLineEdit" name="msg">
          <property name="styleSheet">
           <string notr="true">background-color: rgb(255, 251, 247);</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QListWidget" name="RoomUsers">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>2000</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(246, 251, 255);</string>
          </property>
         </widget>
        </item>
@@ -125,7 +134,8 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionJoin">
    <property name="icon">
-    <iconset theme="icons"/>
+    <iconset theme="icons">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Join</string>

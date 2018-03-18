@@ -14,37 +14,36 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->centralWidget->setLayout(ui->MailLayout);
-    ui->scrollTalks->setPageStep(101);
-    ui->scrollTalks->setMaximum(1);
 
     ui->ChatBox->setEnabled(false);
     ui->msg->setEnabled(false);
     ui->send->setEnabled(false);
-
+    ui->RoomUsers->setVisible(false);
     connect(ui->actionJoinServer,SIGNAL(triggered(bool)),this,SLOT(LoginOnServer()));
     connect(ui->actionDisconnect,SIGNAL(triggered(bool)), this, SLOT(DissconectFromServer()));
     connect(ui->actionRegister, SIGNAL(triggered(bool)), this, SLOT(RegisterOnServer()));
     connect(ui->actionStart_PM,SIGNAL(triggered(bool)), this, SLOT(StartPM()));
-    connect(ui->actionJoin, SIGNAL(toggled(bool)),this, SLOT(JoinRoom()));
+    connect(ui->actionJoin, SIGNAL(triggered(bool)),this, SLOT(JoinRoom()));
     connect(ui->Talks, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(TalkChange(QListWidgetItem*)));
     connect(ui->send, SIGNAL(clicked(bool)), this, SLOT(sendMsg()));
     connect(ui->msg, SIGNAL(returnPressed()), this, SLOT(sendMsg()));
+    connect(&MainProtocol,SIGNAL(wasLogined(bool)), this, SLOT(InitThread()) );
+
     //  void QuitRoom(const QString name);
-    reader =  new reader_msg(MainProtocol,ui->Talks,ui->writted); // it not in : because it is wrong.
+    io =  new IOThread(MainProtocol,ui->Talks,ui->writted, logs, ui->RoomUsers);
+
+
+}
+
+void MainWindow::InitThread(void){
+    qDebug() << "InitThread";
+    if(MainProtocol.isLogined())
+        init_IO_thread();
 }
 
 void MainWindow::sendMsg(void){
-    try{
-        MainProtocol.privmsg(chatting, ui->msg->text());
-        ui->writted->insertPlainText("You: "+ui->msg->text()+"\n");
-    }catch(std::runtime_error & e){
-            QListWidgetItem* item = ui->Talks->item(ui->Talks->currentIndex().row());
-            ui->Talks->removeItemWidget(item);
-            delete item;
-            ErrorMsg("ERROR", e.what());
-            ui->writted->setPlainText("");
-    }
-    ui->msg->setText("");
+ io->SendMsg(ui->msg->text(), chatting);
+ ui->msg->setText("");
 }
 
 MainWindow::~MainWindow()
@@ -53,16 +52,34 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::TalkChange(QListWidgetItem * item){
-
-    if(MainProtocol.isLogined())
-        init_read_thread();
-
     qDebug() << item->text() <<"start talking";
     ui->ChatBox->setEnabled(true);
     ui->msg->setEnabled(true);
     ui->send->setEnabled(true);
+    ui->writted->setEnabled(true);
     chatting=item->text();
-    ui->writted->setPlainText("");
+    qDebug() << "Chatting " << chatting;
+    std::string chattings_str = chatting.toStdString();
+    std::ostringstream msgs;
+
+    if( logs.find(chattings_str) == std::end(logs) ){
+        logs[chattings_str] = QStringList{};
+        if(chattings_str.c_str()[0]=='@'){
+            MainProtocol.joinToRoom(chatting.mid(1));
+            io->getRoomList(chatting.mid(1));
+        }
+    }
+
+
+
+    for(auto it = logs[chattings_str].begin();
+        it!=logs[chattings_str].end();
+        it++){
+        msgs << it->toStdString() ;
+    }
+
+    ui->writted->setPlainText(msgs.str().c_str());
+    ui->writted->moveCursor(QTextCursor::End);
 }
 
 void MainWindow::RegisterOnServer(void){
@@ -89,13 +106,14 @@ bool MainWindow::ConnectToServer(void){
                 qDebug() << "Connected to server";
                 return true;
             }
-    }else{
+    }else if(ok){
         ConnectToServer();
     }
     return false;
 }
 
 void MainWindow::DissconectFromServer(void){
+    stop_IO_thread();
     MainProtocol.dissconnect();
     qDebug() << "Dissconnected from server";
 
@@ -105,19 +123,17 @@ void MainWindow::StartPM(void){
     bool ok;
     QString user =
             QInputDialog::getText(this,tr("Start PM"),tr("Username:"),QLineEdit::Normal,"user",&ok);
-    for( int i = 0; i < ui->Talks->count();i++){
-     QListWidgetItem* item = ui->Talks->item(i);
-     if(item->text() == user)
-     {
-         ok = false;
-         break;
-     }
+    QListWidgetItem * item = Util::findItemInList(ui->Talks, user );
+    if( item != 0 ){
+        TalkChange(item);
+        ok = false;
     }
 
     if(ok){
         try{
             MainProtocol.privmsg(user, "Start Talking");
             ui->Talks->addItem(user);
+            TalkChange( ui->Talks->item(ui->Talks->count()-1) );
         }catch(std::runtime_error & e){
             ErrorMsg("ERROR", e.what());
         }
@@ -126,7 +142,15 @@ void MainWindow::StartPM(void){
 }
 
 void MainWindow::JoinRoom(void){
-
+    qDebug() << "JoinRoom";
+    bool ok;
+    QString RoomName =
+            QInputDialog::getText(this,tr("Join to Room"),tr("Room name:"),QLineEdit::Normal,"main",&ok);
+    if(ok){
+            chatting="@"+RoomName;
+            MainProtocol.joinToRoom(chatting.mid(1));
+            io->getRoomList(chatting.mid(1));
+    }
 }
 
 void MainWindow::QuitRoom(const QString name){ // from emit

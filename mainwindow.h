@@ -3,14 +3,16 @@
 #include "QVagitanChatProtocol.h"
 #include <QMainWindow>
 #include<QInputDialog>
-#include<QMessageBox>
 #include<QDebug>
 #include<QListWidget>
 #include<QThread>
 
+#include<sstream>
+
 #include"login.h"
 #include"register.h"
-#include"reader_msg.h"
+#include"IOThread.h"
+#include"util.h"
 
 namespace Ui {
 class MainWindow;
@@ -37,22 +39,32 @@ private:
     QString chatting;
 private:
     bool thread_initted=false;
-    void init_read_thread(void){
+    inline void init_IO_thread(void){
         if(!thread_initted){
             thread_initted=true;
-            reader->moveToThread(&readmsg);
-
-            connect(&readmsg, SIGNAL(finished()), this, SLOT(DissconectFromServer()));
-            connect(&readmsg, SIGNAL(started()), reader, SLOT(reading_thread()));
-            readmsg.start();
+            io->moveToThread(&thread_io);
+            io->start();
+            connect(&thread_io, SIGNAL(finished()), this, SLOT(DissconectFromServer()));
+            connect(&thread_io, SIGNAL(started()), io, SLOT(reading_thread()));
+            thread_io.start();
 
             qDebug() << "Thread inited";
         }
     }
-private:
-    QThread readmsg;
-    reader_msg * reader;
+    inline void stop_IO_thread(void){
+        if(thread_initted){
+            qDebug() << "Stop thread for a while";
+            thread_initted=false;
+            io->stop();
+            thread_io.terminate();
+            while(thread_io.isRunning());
+        }
+    }
 
+private:
+    QThread thread_io;
+    IOThread * io;
+    logmap logs;
 
 private slots:
     bool ConnectToServer(void);
@@ -64,8 +76,9 @@ private slots:
     void JoinRoom(void);
     void QuitRoom(const QString name);
     void sendMsg(void);
-signals:
 
+    void InitThread(void);
+signals:
 
 };
 

@@ -17,13 +17,15 @@ SOURCES += main.cpp\
     QVagitanChatProtocol.cpp \
     login.cpp \
     register.cpp \
-    reader_msg.cpp
+    util.cpp \
+    IOThread.cpp
 
 HEADERS  += mainwindow.h \
     QVagitanChatProtocol.h \
     login.h \
     register.h \
-    reader_msg.h
+    util.h \
+    IOThread.h
 
 FORMS    += mainwindow.ui
 

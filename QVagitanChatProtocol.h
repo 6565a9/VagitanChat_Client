@@ -5,6 +5,7 @@
 #include<QTcpSocket>
 #include<QDebug>
 #include<QMessageBox>
+#include<QStringList>
 //#include<QTextCodec>
 enum class type_privmsg{
     user, chat
@@ -54,9 +55,17 @@ public:
     bool isLogined(void){
         return logined;
     }
+    QStringList getList(const QString room_name);
+    void joinToRoom(const QString);
 
 private:
     bool write(QString text) noexcept;
+    inline void logining(void){
+        qDebug() << "Logining";
+        logined=true;
+        this->username=username;
+        emit wasLogined(true);
+    }
 
 private:
     QTcpSocket * m_socket;
@@ -70,6 +79,7 @@ private:
 signals:
     void SuccefullyConnected(bool);
     void lost(bool);
+    void wasLogined(bool);
 public slots:
     void wasConnected(void) noexcept;
     void readyRead(void) noexcept;
